@@ -5,18 +5,21 @@ clear all;
 close all;
 clc;
 
+rng(100);  % For reproducibility
+
 % Define script params
 userRange_min = 1;
 userRange_max = 10;
 
 % Overfitting prevention parameters
-TrainTargetImposterRatio = 1/6;  % Fixed ratio 1:6
+TrainTargetImposterRatio = 1/5;  % Fixed ratio 1:5
 dropoutRate = 0.3;  % Dropout rate for regularization
 l2RegParam = 1e-4;  % L2 regularization parameter
 performanceGoal = 1e-5;  % Performance goal for training
 minGrad = 1e-6;  % Minimum gradient for training
 earlyStoppingPatience = 10;  % Patience for early stopping
 maxEpochs = 500;  % Maximum number of training epochs
+learningRate = 0.01; % Learning rate
 
 numUsers = userRange_max - userRange_min + 1;
 
@@ -28,10 +31,8 @@ userLabelsTrain = cell(numUsers, 1);    % Store training labels for each user
 userLabelsTest = cell(numUsers, 1);     % Store testing labels for each user
 
 % Define file patterns for each user
-filePatternsTrain = 'Acc_FreqD_FDay';
-filePatternsTest = 'Acc_FreqD_MDay';
-
-rng(100);  % For reproducibility
+filePatternsTrain = 'Acc_TimeD_FreqD_FDay';
+filePatternsTest = 'Acc_TimeD_FreqD_MDay';
 
 % First: Load and combine features for each user separately
 fprintf('Loading and combining features for each user...\n');
@@ -70,6 +71,7 @@ for user = userRange_min:userRange_max
   end
 end
 
+% Random 
 % Leave-Out Users list generation
 leaveOutUsersList = zeros(1, numUsers); % Initialize the list
 
@@ -115,6 +117,7 @@ for targetUser = 1:numUsers
   % Prepare Testing set
   testTargetSampleCount = size(userData(targetUser).testFeatures, 1);
   testImposterSampleCount = trainTargetSampleCount;
+  % testImposterSampleCount = 324;
   testSamplesPerImposter = floor(testImposterSampleCount/(numUsers-1));
 
   XTest = [userData(targetUser).testFeatures];
@@ -151,7 +154,8 @@ for targetUser = 1:numUsers
   net.trainParam.goal = performanceGoal;
   net.trainParam.min_grad = minGrad;
   net.performParam.regularization = l2RegParam;
-  net.trainParam.max_fail = earlyStoppingPatience;  % Add early stopping patience
+  net.trainParam.max_fail = earlyStoppingPatience;
+  net.trainParam.lr = learningRate;
 
   % Train the network
   tic;
@@ -283,9 +287,7 @@ results = struct(...
 % Format and display neural network details
 fprintf('\n==== Neural Network Architecture ====\n');
 fprintf('Input Layer: %d neurons\n', size(XTrain, 2));
-fprintf('Hidden Layer 1: 128 neurons (logsig)\n');
-fprintf('Hidden Layer 2: 64 neurons (tansig)\n');
-fprintf('Hidden Layer 3: 32 neurons (logsig)\n');
+fprintf('Hidden Layer 1: 131 neurons (tansig)\n');
 fprintf('Output Layer: 1 neuron (tansig)\n');
 fprintf('Training Algorithm: Scaled Conjugate Gradient (trainscg)\n');
 fprintf('Performance Function: Cross-Entropy\n');
