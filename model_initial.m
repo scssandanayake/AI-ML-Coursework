@@ -24,18 +24,12 @@ learningRate = 0.01; % Learning rate
 numUsers = userRange_max - userRange_min + 1;
 
 % 1. Data Loading and Preprocessing
-% Initialize cell arrays to store data for each user separately
-userFeaturesTrain = cell(numUsers, 1);  % Store training features for each user
-userFeaturesTest = cell(numUsers, 1);    % Store testing features for each user
-userLabelsTrain = cell(numUsers, 1);    % Store training labels for each user
-userLabelsTest = cell(numUsers, 1);     % Store testing labels for each user
-
 % Define file patterns for each user
 filePatternsTrain = 'Acc_TimeD_FreqD_FDay';
 filePatternsTest = 'Acc_TimeD_FreqD_MDay';
 
 % First: Load and combine features for each user separately
-fprintf('Loading and combining features for each user...\n');
+fprintf('Loading data for each user...\n');
 
 % Initialize storage datasets
 userData = struct();
@@ -71,15 +65,16 @@ for user = userRange_min:userRange_max
   end
 end
 
-% Random 
+% Random
 % Leave-Out Users list generation
-leaveOutUsersList = zeros(1, numUsers); % Initialize the list
+% leaveOutUsersList = zeros(1, numUsers); % Initialize the list
 
-for targetUser = userRange_min:userRange_max
-  % Generate a random number between 1 and 10 excluding the targetUser
-  options = setdiff(1:10, targetUser); % Exclude targetUser
-  leaveOutUsersList(targetUser) = options(randi(length(options))); % Select a random number
-end
+% for targetUser = userRange_min:userRange_max
+%   % Generate a random number between 1 and 10 excluding the targetUser
+%   options = setdiff(1:10, targetUser); % Exclude targetUser
+%   leaveOutUsersList(targetUser) = options(randi(length(options))); % Select a random number
+% end
+leaveOutUsersList = [6, 3, 2, 5, 6, 1, 9, 7, 7, 3];
 
 % Train one model for each user (one-vs-all approach)
 models = cell(numUsers, 1);
@@ -89,7 +84,7 @@ userMetrics = zeros(numUsers, 14);
 userPerformance = zeros(numUsers, 3); % For timing, memory, throughput
 userSimilarityData = cell(3, numUsers, numUsers);
 
-for targetUser = 1:numUsers
+for targetUser = userRange_min:userRange_max
   % Prepare Training set
   trainTargetSampleCount = size(userData(targetUser).trainFeatures, 1);
   trainImposterSampleCount = trainTargetSampleCount*(1/TrainTargetImposterRatio);
@@ -116,15 +111,17 @@ for targetUser = 1:numUsers
 
   % Prepare Testing set
   testTargetSampleCount = size(userData(targetUser).testFeatures, 1);
-  testImposterSampleCount = trainTargetSampleCount;
-  % testImposterSampleCount = 324;
+  % testImposterSampleCount = trainTargetSampleCount;
+  testImposterSampleCount = 324;
   testSamplesPerImposter = floor(testImposterSampleCount/(numUsers-1));
 
   XTest = [userData(targetUser).testFeatures];
   yTest = ones(testTargetSampleCount, 1);
+
   testImposterFeatures = [];
   testImposterLabels = [];
   testUserLabels = ones(testTargetSampleCount, 1) * targetUser;
+
   for imposterUser = 1:numUsers
     if imposterUser ~= targetUser
       selectedIdx = randperm(size(userData(imposterUser).testFeatures, 1), testSamplesPerImposter);
@@ -143,10 +140,20 @@ for targetUser = 1:numUsers
 
   % Create and configure the network
   net = feedforwardnet(131, 'trainscg');
+  net.userdata.note = "Initial Feedforward Neural Network with random Leave-Out Users";
+  net.userdata.trainTargetImposterRatio = sprintf("1:%d", round(1/TrainTargetImposterRatio));
+  net.userdata.dropoutRate = dropoutRate;
+  net.userdata.l2RegParam = l2RegParam;
+  net.userdata.performanceGoal = performanceGoal;
+  net.userdata.minGrad = minGrad;
+  net.userdata.earlyStoppingPatience = earlyStoppingPatience;
+  net.userdata.maxEpochs = maxEpochs;
+  net.userdata.learningRate = learningRate;
+  net.userdata.targetUser = sprintf('User %d', targetUser);
   net.performFcn = 'crossentropy';
 
   % Configure layers
-  net.layers{1}.transferFcn = 'tansig';
+  net.layers{1}.transferFcn = 'logsig';
   net.layers{end}.transferFcn = 'tansig';
 
   % Configure training parameters
