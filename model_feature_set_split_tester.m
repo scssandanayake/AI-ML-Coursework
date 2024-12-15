@@ -275,28 +275,28 @@ for setIdx = 1:length(featureSets)
 end
 
 % Plotting results as bar charts
-metrics = {'FAR', 'FRR', 'EER', 'Accuracy', '', 'F1Score',};
-titles = {'False Acceptance Rate', 'False Rejection Rate', 'Equal Error Rate', 'Accuracy', '', 'F1-Score'};
+metrics = {'FAR', 'FRR', 'EER', 'Accuracy', '', 'F1Score'};
+titles = {'False Acceptance Rate', 'False Rejection Rate', 'Equal Error Rate', 'Accuracy', '', 'F1-Score',};
 figure('Position', [100 100 1200 800]);
 
-for i = 1:length(titles)
+for i = 1:length(metrics)
   if isempty(metrics{i})
     continue;
   end
   subplot(2,3,i);
-  data = zeros(length(scenarioNames), length(featureSets));  % Note: dimensions swapped
+  data = zeros(length(featureSets), length(scenarioNames));
   for setIdx = 1:length(featureSets)
     for scenIdx = 1:length(scenarioNames)
-      data(scenIdx, setIdx) = allResults{setIdx, scenIdx}.(metrics{i});  % Note: indices swapped
+      data(setIdx, scenIdx) = allResults{setIdx, scenIdx}.(metrics{i});
     end
   end
 
   b = bar(data);
   title(titles{i});
-  xlabel('Testing Scenarios');
+  xlabel('Feature Sets');
   ylabel([titles{i} ' (%)']);
-  xticklabels({'50-50 Split', 'FDay-MDay', 'Combined'});
-  legend({'TimeD+FreqD', 'TimeD', 'FreqD'}, 'Location', 'best');
+  xticklabels({'TimeD+FreqD', 'TimeD', 'FreqD'});
+  legend(scenarioNames, 'Location', 'best');
   grid on;
 end
 
