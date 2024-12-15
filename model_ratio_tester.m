@@ -1,6 +1,6 @@
 %% FeedForwardNet with Ratio Splitting Performance Benchmarking
 clear all; close all; clc;
-rng(234);  % For reproducibility
+rng(100);  % For reproducibility
 
 % Define parameters
 userRange_min = 1;
@@ -14,9 +14,13 @@ ratios = [ ...
   1/6, ...
   1/7 ...
   ];
-dropoutRate = 0.3;
-l2RegParam = 1e-4;
-maxEpochs = 200;
+dropoutRate = 0.3;  % Dropout rate for regularization
+l2RegParam = 1e-4;  % L2 regularization parameter
+performanceGoal = 1e-5;  % Performance goal for training
+minGrad = 1e-6;  % Minimum gradient for training
+earlyStoppingPatience = 10;  % Patience for early stopping
+maxEpochs = 500;  % Maximum number of training epochs
+learningRate = 0.01; % Learning rate
 
 % Define feature set pairs
 featureSets = {
@@ -127,22 +131,20 @@ for setIdx = 1:length(featureSets)
       testFeatures = normalize(testFeatures, 'range');
 
       % Neural Network setup and training
-      net = feedforwardnet([128, 64, 32], 'trainscg');
+      net = feedforwardnet(131, 'trainscg');
       net.performFcn = 'crossentropy';
 
       % Configure layers
-      net.layers{1}.transferFcn = 'logsig';
-      net.layers{2}.transferFcn = 'tansig';
-      net.layers{3}.transferFcn = 'logsig';
+      net.layers{1}.transferFcn = 'tansig';
       net.layers{end}.transferFcn = 'tansig';
 
-      % Training parameters
+      % Configure training parameters
       net.trainParam.epochs = maxEpochs;
-      net.trainParam.goal = 1e-5;
-      net.trainParam.lr = 0.01;
-
-      % Enable regularization
+      net.trainParam.goal = performanceGoal;
+      net.trainParam.min_grad = minGrad;
       net.performParam.regularization = l2RegParam;
+      net.trainParam.max_fail = earlyStoppingPatience;
+      net.trainParam.lr = learningRate;
 
       % Train network
       net = train(net, X_train', y_train');
@@ -168,32 +170,32 @@ for setIdx = 1:length(featureSets)
       recall = tp/(tp + fn);
       f1_score = 2 * (precision * recall)/(precision + recall);
 
-      % Create and plot confusion matrix for current user
-      confMatrix = [tp fn; fp tn];
-      figure('Position', [100 100 400 300]);
-      confusionchart(confMatrix, {'Genuine', 'Impostor'}, ...
-        'Title', sprintf('Confusion Matrix\nUser %d - Ratio 1:%d - %s', ...
-        targetUser, 1/currentRatio, featureSets{setIdx}{1}));
-
-      % Save the confusion matrix plot
-      saveas(gcf, sprintf('confusion_matrix_U%02d_R%d_%s.png', ...
-        targetUser, 1/currentRatio, strrep(featureSets{setIdx}{1}, '_', '')));
-      close gcf;
+      % % Create and plot confusion matrix for current user
+      % confMatrix = [tp fn; fp tn];
+      % figure('Position', [100 100 400 300]);
+      % confusionchart(confMatrix, {'Genuine', 'Impostor'}, ...
+      %   'Title', sprintf('Confusion Matrix\nUser %d - Ratio 1:%d - %s', ...
+      %   targetUser, 1/currentRatio, featureSets{setIdx}{1}));
 
       specificity = tn/(tn + fp);
-      fpr = fp/(fp+tn);
-      fnr = fn/(fn+tp);
-      eer = (fnr+fpr)/2;
 
       % Matthews Correlation Coefficient
       mcc = ((tp*tn)-(fp*fn))/sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn));
 
       % AUC Score
-      [~,~,~,auc] = perfcurve(testLabels, YPred, true);
+      [X,Y,~,auc] = perfcurve(testLabels, YPred, true);
+
+      % Calculate FAR and FRR at different thresholds
+      FAR = X;
+      FRR = 1 - Y;
+
+      % Find the threshold where FAR and FRR are equal (EER)
+      [~, eerIdx] = min(abs(FAR - FRR));
+      EER = (FAR(eerIdx) + FRR(eerIdx)) / 2;
 
       % Store metrics
       userMetrics(targetUser, :) = [accuracy, precision, recall, specificity, ...
-        f1_score, mcc, fpr*100, fnr*100, eer*100, auc, ...
+        f1_score, mcc, FAR(eerIdx)*100, FRR(eerIdx)*100, EER*100, auc, ...
         size(X_train, 1), size(targetSamples, 1), size(imposterFeatures, 1), ...
         size(testFeatures, 1)];
     end
@@ -252,10 +254,6 @@ for setIdx = 1:length(featureSets)
     'TrainingSetSize', 'TargetSamples', 'ImposterSamples', 'TestSetSize'});
 
   disp(resultsTable);
-
-  % Save results for this feature set
-  filename = sprintf('ratio_splitting_performance_%s.mat', strrep(featureSets{setIdx}{1}, '_', ''));
-  save(filename, 'ratioResults', 'resultsTable');
 end
 
 % Convert ratio strings to numeric values for plotting

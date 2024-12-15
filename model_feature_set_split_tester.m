@@ -202,6 +202,10 @@ for setIdx = 1:length(featureSets)
       net.trainParam.max_fail = earlyStoppingPatience;
       net.trainParam.lr = learningRate;
 
+      % Prevent training window from appearing
+      net.trainParam.showWindow = false;
+      net.trainParam.showCommandLine = false;
+
       % Train network
       net = train(net, X_train', y_train');
 
@@ -301,6 +305,37 @@ for i = 1:length(metrics)
 end
 
 sgtitle('Performance Metrics Across Different Testing Scenarios and Feature Sets');
+
+% After plotting results, add reorganized console output
+metrics = {'Accuracy', 'Precision', 'Recall', 'Specificity', 'F1Score', 'MCC', 'FAR', 'FRR', 'EER', 'AUC'};
+featureSetNames = {'TimeD+FreqD', 'TimeD', 'FreqD'};
+
+fprintf('\n=== Performance Metrics Comparison ===\n\n');
+
+for setIdx = 1:length(featureSetNames)
+  fprintf('\n=== %s Domain ===\n', featureSetNames{setIdx});
+  fprintf('%-12s', 'Metric');
+  for scenIdx = 1:length(scenarioNames)
+    fprintf('%-20s', scenarioNames{scenIdx});
+  end
+  fprintf('\n%s\n', repmat('-', 1, 12 + 20 * length(scenarioNames)));
+
+  for metric = metrics
+    fprintf('%-12s', metric{1});
+    for scenIdx = 1:length(scenarioNames)
+      if strcmp(metric{1}, 'MCC') || strcmp(metric{1}, 'AUC')
+        % Display these metrics without percentage
+        fprintf('%-20.4f', allResults{setIdx, scenIdx}.(metric{1}));
+      else
+        % Display other metrics with percentage
+        val = allResults{setIdx, scenIdx}.(metric{1});
+        fprintf('%6.2f%%             ', val);
+      end
+    end
+    fprintf('\n');
+  end
+  fprintf('\n');
+end
 
 % Save results
 save('testing_scenarios_results.mat', 'allResults');
