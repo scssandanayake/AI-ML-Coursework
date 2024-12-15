@@ -23,6 +23,13 @@ learningRate = 0.01; % Learning rate
 
 numUsers = userRange_max - userRange_min + 1;
 
+% Feed forward net architecture
+trainFcn = 'trainscg';
+hiddenLayerSizes = [131];
+hiddenLayerActivationFcns = {'logsig'};
+outputLayerActivationFcn = 'tansig';
+performanceFcn = 'crossentropy';
+
 % 1. Data Loading and Preprocessing
 % Define file patterns for each user
 filePatternsTrain = 'Acc_TimeD_FreqD_FDay';
@@ -111,8 +118,7 @@ for targetUser = userRange_min:userRange_max
 
   % Prepare Testing set
   testTargetSampleCount = size(userData(targetUser).testFeatures, 1);
-  % testImposterSampleCount = trainTargetSampleCount;
-  testImposterSampleCount = 324;
+  testImposterSampleCount = testTargetSampleCount*(numUsers-1);
   testSamplesPerImposter = floor(testImposterSampleCount/(numUsers-1));
 
   XTest = [userData(targetUser).testFeatures];
@@ -140,7 +146,7 @@ for targetUser = userRange_min:userRange_max
 
   % Create and configure the network
   net = feedforwardnet(131, 'trainscg');
-  net.userdata.note = "Initial Feedforward Neural Network with random Leave-Out Users";
+  net.userdata.note = "Initial Feedforward Neural Network with selected Leave-Out Users";
   net.userdata.trainTargetImposterRatio = sprintf("1:%d", round(1/TrainTargetImposterRatio));
   net.userdata.dropoutRate = dropoutRate;
   net.userdata.l2RegParam = l2RegParam;
@@ -150,11 +156,13 @@ for targetUser = userRange_min:userRange_max
   net.userdata.maxEpochs = maxEpochs;
   net.userdata.learningRate = learningRate;
   net.userdata.targetUser = sprintf('User %d', targetUser);
-  net.performFcn = 'crossentropy';
+  net.performFcn = performanceFcn; % Performance function
 
   % Configure layers
-  net.layers{1}.transferFcn = 'logsig';
-  net.layers{end}.transferFcn = 'tansig';
+  for layerNo = 1:length(hiddenLayerActivationFcns)
+    net.layers{layerNo}.transferFcn = hiddenLayerActivationFcns{layerNo};
+  end
+  net.layers{end}.transferFcn = outputLayerActivationFcn; % set Output Layer Activation Function
 
   % Configure training parameters
   net.trainParam.epochs = maxEpochs;
@@ -201,13 +209,17 @@ for targetUser = userRange_min:userRange_max
   specificity = tn/(tn + fp);
   accuracy = (tp + tn)/(tp + tn + fp + fn);
 
-  fpr = fp/(fp+tn);
-  fnr = fn/(fn+tp);
-  eer = (fnr+fpr)/2;
-
   mcc = ((tp*tn)-(fp*fn))/sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn));
 
   [X,Y,T,AUC] = perfcurve(yTest, yPred, true);
+
+  % Calculate FAR and FRR at different thresholds
+  FAR = X;
+  FRR = 1 - Y;
+
+  % Find the threshold where FAR and FRR are equal (EER)
+  [~, eerIdx] = min(abs(FAR - FRR));
+  EER = (FAR(eerIdx) + FRR(eerIdx)) / 2;
 
   % Calculate & Store Similarity stats
   % Precompute statistics matrices
@@ -230,8 +242,8 @@ for targetUser = userRange_min:userRange_max
   userSimilarityData(3, targetUser, :) = num2cell(similarity_mid_variations);
 
   % Store metrics
-  userMetrics(targetUser, :) = [accuracy, precision, recall, specificity, ...
-    f1_score, mcc, fpr*100, fnr*100, eer*100, AUC, ...
+  userMetrics(targetUser, :) = [accuracy, precision, recall, specificity, f1_score, mcc, ...
+    FAR(eerIdx)*100, FRR(eerIdx)*100, EER*100, AUC, ...
     size(XTrain, 1), trainTargetSampleCount, trainImposterSampleCount, ...
     size(XTest, 1)];
 
@@ -260,10 +272,19 @@ for targetUser = userRange_min:userRange_max
   % Plot ROC curve
   figure;
   plot(X,Y);
+
+  hold on;
+
+  % Mark the EER point on the ROC curve
+  plot(FAR(eerIdx), Y(eerIdx), 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+  text(FAR(eerIdx), Y(eerIdx), sprintf('  EER = %.2f%%', EER * 100), 'VerticalAlignment', 'bottom');
+
+  % Add labels and title
   xlabel('False Positive Rate');
   ylabel('True Positive Rate');
   title(sprintf('ROC Curve - User %d (AUC = %.3f)', targetUser, AUC));
   grid on;
+  hold off;
 end
 
 % Compute average metrics
@@ -294,9 +315,11 @@ results = struct(...
 % Format and display neural network details
 fprintf('\n==== Neural Network Architecture ====\n');
 fprintf('Input Layer: %d neurons\n', size(XTrain, 2));
-fprintf('Hidden Layer 1: 131 neurons (tansig)\n');
-fprintf('Output Layer: 1 neuron (tansig)\n');
-fprintf('Training Algorithm: Scaled Conjugate Gradient (trainscg)\n');
+for i = 1:length(hiddenLayerSizes)
+  fprintf('Hidden Layer %d: %d neurons (%s)\n', i, hiddenLayerSizes(i), hiddenLayerActivationFcns{i});
+end
+fprintf(['Output Layer: ' net.outputs{end}.size ' neuron (' outputLayerActivationFcn ')\n']);
+fprintf(['Training Algorithm: ' trainFcn '\n']);
 fprintf('Performance Function: Cross-Entropy\n');
 fprintf('L2 Regularization: %e\n', l2RegParam);
 fprintf('Max Epochs: %d\n', maxEpochs);
