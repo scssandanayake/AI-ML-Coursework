@@ -5,6 +5,7 @@ This repository contains the implementation, and results for an acceleration-bas
 ## 🌟 Final Report
 
 ### 📢 *Extended version of the report is available* 🛑 [**CLICK HERE TO VIEW**](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf) 🛑
+</br>
 
 ## 🌟 Project Overview
 
