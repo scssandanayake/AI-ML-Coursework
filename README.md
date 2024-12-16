@@ -2,6 +2,29 @@
 
 This repository contains the implementation, and results for an acceleration-based user authentication system using neural networks and optimization techniques. The system leverages motion data from wearable devices to distinguish between legitimate users and imposters, with applications in secure authentication systems.
 
+## Final Report
+
+📢 **Important :** </br></br> 
+Extended version of report is avilable : **CLICK HERE** [`Extended Version of AI & ML Report _ GROUP - 34.pdf`](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf)
+
+## Final Report
+
+📢 **Important :** </br></br> 
+Extended version of the report is available :  
+
+<a href="./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf" 
+   style="display:inline-block;
+          background: linear-gradient(to right, #ff7e5f, #feb47b);
+          color: white;
+          padding: 12px 20px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: bold;
+          font-size: 16px;
+          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+          text-align: center;" 
+   target="_blank">🌟 CLICK HERE TO VIEW THE REPORT 🌟</a>
+
 ## Project Overview
 
 This project explores a novel method for continuous user authentication using motion data collected from wearable devices like smartwatches. The primary goals include:
@@ -84,13 +107,13 @@ Similarity scores provided key insights:
 
 ## How to Run
 
-1. Clone the repository.
-2. Install MATLAB and required toolboxes.
-3. Run the scripts in sequence, starting with `model_initial.m`.
+1. Clone the repository.  
+2. Install MATLAB and required toolboxes.  
+3. Run the scripts in sequence, starting with [`model_initial.m`](./model_initial.m).  
 
 ## References
 
-1. Full reference list available in `Extended Version of AI & ML Report _ GROUP - 34.pdf`.
+1. Full reference list available in [`Extended Version of AI & ML Report _ GROUP - 34.pdf`](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf).
 
 ## Contributors
 
