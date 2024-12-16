@@ -4,19 +4,9 @@ This repository contains the implementation, and results for an acceleration-bas
 
 ## Final Report
 
-### 📢 ***Important :*** *Extended version of report is available* </br>
-<a href="./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf" 
-   style="display:inline-block;
-          background: linear-gradient(to right, #ff7e5f, #feb47b);
-          color: white;
-          padding: 12px 20px;
-          text-decoration: none;
-          border-radius: 8px;
-          font-weight: bold;
-          font-size: 16px;
-          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-          text-align: center;" 
-   target="_blank">🌟 CLICK HERE TO VIEW THE REPORT 🌟</a>
+### 🚨 **Important :** *Extended version of the report is available*
+
+✨ [**CLICK HERE TO VIEW THE REPORT**](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf) ✨
 
 ## Project Overview
 
