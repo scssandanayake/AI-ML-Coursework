@@ -4,7 +4,7 @@ This repository contains the implementation, and results for an acceleration-bas
 
 ## 🌟 Final Report
 
-### 📢 *Extended version of the report is available* 🛑 [**CLICK HERE TO VIEW THE REPORT**](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf) 🛑
+### 📢 *Extended version of the report is available* 🛑 [**CLICK HERE TO VIEW**](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf) 🛑
 
 ## 🌟 Project Overview
 
@@ -90,11 +90,11 @@ Similarity scores provided key insights:
 
 1. Clone the repository.  
 2. Install MATLAB and required toolboxes.  
-3. Run the scripts in sequence, starting with [`model_initial.m`](./model_initial.m).  
+3. Run the scripts in sequence, starting with ☛ [`model_initial.m`](./model_initial.m)
 
 ## 📑 References
 
-1. Full reference list available in [`Extended Version of AI & ML Report _ GROUP - 34.pdf`](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf).
+1. Full reference list available in ☛ [`Extended Version of AI & ML Report _ GROUP - 34.pdf`](./Extended%20Version%20of%20AI%20&%20ML%20Report%20_%20GROUP%20-%2034.pdf)
 
 ## 😊 Contributors
 
